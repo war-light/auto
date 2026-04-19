@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  selector:
+    matchLabels:
+      app: redis
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - image: k3d-registry.local:12345/redis:7.2-alpine
+        name: redis
+        command: ["redis-server", "--appendonly", "yes"]
+        ports:
+        - containerPort: 6379
+          name: redis
+        volumeMounts:
+        - name: redis-persistent-storage
+          mountPath: /data
+      volumes:
+      - name: redis-persistent-storage
+        persistentVolumeClaim:
+          claimName: redis-pv-claim

@@ -64,6 +64,7 @@ def install_system_pods():
         "mysql": {"host": 3306, "lb": 30036, "desc": "MySQL"},
         "postgres": {"host": 5432, "lb": 30035, "desc": "Postgres"},
         "mssql": {"host": 1433, "lb": 30034, "desc": "SQL Server"},
+        "redis": {"host": 6379, "lb": 30037, "desc": "Redis"},
     }
 
     # Let's start the ones that we find that are "active" or requested

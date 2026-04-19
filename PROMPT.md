@@ -23,11 +23,3 @@ I am providing you with the source code for a Python CLI project called **"Auto"
 *   **Output Style:** Use `from rich import print as rprint` for user output. Do not use standard `print()` unless debugging specific raw output.
 *   **Error Handling:** Use `utils.declare_error()` for fatal errors to maintain consistency with the existing CLI experience.
 *   **Subprocess Calls:** Prefer `utils.run_and_wait` or `utils.run_command_inside_pod` over writing raw `subprocess.run` calls, to ensure consistent error trapping and output suppression.
-
-#### 4. Architecture Reference
-*   **`auto.py`**: Entry point.
-*   **`autocli/commands.py`**: Defines the CLI commands (start, stop, mysql, etc.) and arguments.
-*   **`autocli/core.py`**: Contains the heavy lifting/business logic (logic for starting clusters, building docker images).
-*   **`autocli/utils.py`**: Low-level helpers (shell execution, config loading, string parsing).
-
-**Please acknowledge you understand these rules and the project structure before we begin.**

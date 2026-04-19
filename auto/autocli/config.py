@@ -104,6 +104,16 @@ system-pods:
         ]
       databases:
         - name: portal
+  - pod:
+      name: redis
+      active: false
+      commands:[
+          "kubectl apply -f ~/.auto/k3s/redis/pv.yaml",
+          "kubectl apply -f ~/.auto/k3s/redis/pvc.yaml",
+          "kubectl apply -f ~/.auto/k3s/redis/deployment.yaml",
+          "kubectl apply -f ~/.auto/k3s/redis/service.yaml",
+          "kubectl apply -f ~/.auto/k3s/redis/ingress.yaml",
+        ]
 """
     config_dir = os.path.expanduser("~") + "/.auto/config"
     config_file = config_dir + "/local.yaml"
