@@ -36,6 +36,22 @@ def _setup_https_certificates(pods):
     return key_file, cert_file
 
 
+def _update_tls_secrets(key_file, cert_file):
+    """Update TLS secrets in the running cluster and restart ingress to pick them up"""
+    rprint("[deep_sky_blue1]Updating TLS secrets in cluster...[/]")
+    for ns in ["default", "ingress-nginx"]:
+        cmd = (
+            f"kubectl create secret tls local-tls --key {key_file} --cert {cert_file} "
+            f"-n {ns} --dry-run=client -o yaml | kubectl apply -f -"
+        )
+        utils.run_and_wait(cmd, capture_output=True)
+    utils.run_and_wait(
+        "kubectl rollout restart deployment ingress-nginx-controller -n ingress-nginx",
+        capture_output=True,
+    )
+    rprint(" :white_heavy_check_mark:[green] TLS secrets updated")
+
+
 def _print_access_hints(pods, use_https):
     """Helper to print access hints at the end of start"""
     print()
@@ -83,6 +99,9 @@ def bootstrap_cluster(pod, dry_run, offline):
 
     if pod:
         rprint(f"[steel_blue]Starting[/] {pod}")
+        if use_https and not dry_run:
+            key_file, cert_file = _setup_https_certificates(pods)
+            _update_tls_secrets(key_file, cert_file)
         start_pod(pod)
         return
 

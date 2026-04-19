@@ -1,5 +1,6 @@
 """System Pods and Database Services Management"""
 
+import concurrent.futures
 import time
 
 from autocli import utils
@@ -159,14 +160,21 @@ def create_databases():
     """Create the databases"""
     rprint("  -- Creating Databases and Buckets")
 
-    # Verify MySQL is ready
-    if not _verify_db_system_ready("mysql", "MySQL", utils.wait_for_mysql_socket):
-        return
+    # Check MySQL and Postgres readiness in parallel so both pods warm up simultaneously
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        mysql_future = executor.submit(
+            _verify_db_system_ready, "mysql", "MySQL", utils.wait_for_mysql_socket
+        )
+        postgres_future = executor.submit(
+            _verify_db_system_ready,
+            "postgres",
+            "Postgres",
+            utils.wait_for_postgres_socket,
+        )
+        mysql_ready = mysql_future.result()
+        postgres_ready = postgres_future.result()
 
-    # Verify Postgres is ready
-    if not _verify_db_system_ready(
-        "postgres", "Postgres", utils.wait_for_postgres_socket
-    ):
+    if not mysql_ready or not postgres_ready:
         return
 
     # Create the databases requested in each of the pods
