@@ -88,6 +88,44 @@ def _install_system_sequence(new_cluster):
         services.create_databases()
 
 
+def _find_pod_entry(pod_name):
+    """Find a pod's repo entry in CONFIG['pods'] by name"""
+    for entry in CONFIG.get("pods", []):
+        if isinstance(entry, dict) and "repo" in entry:
+            entry_name = entry["repo"].split("/")[-1:][0].replace(".git", "")
+            if entry_name == pod_name:
+                return entry
+    return None
+
+
+def _apply_code_pv_pvc():
+    """Apply the shared code PersistentVolume and PersistentVolumeClaim"""
+    user_path = os.path.expanduser("~")
+    utils.run_and_wait(f"kubectl apply -f {user_path}/.auto/k3s/pv.yaml")
+    utils.run_and_wait(f"kubectl apply -f {user_path}/.auto/k3s/pvc.yaml")
+
+
+def _prepare_single_pod(pod, offline):
+    """Pull the repo, build+push the image, and apply PV/PVC for a single pod start"""
+    pod_entry = _find_pod_entry(pod)
+    if not pod_entry:
+        utils.declare_error(
+            f"Pod '{pod}' not found in ~/.auto/config/local.yaml. "
+            "Add the repo entry there first, then run 'auto start' again."
+        )
+        return
+
+    if not offline:
+        rprint(f"[deep_sky_blue1]Pulling code for[/] {pod}")
+        utils.ensure_host_known(pod_entry["repo"])
+        utils.pull_repo(pod_entry, CONFIG["code"])
+
+        registry.start_registry()
+        registry.tag_pod_docker_image(pod)
+
+    _apply_code_pv_pvc()
+
+
 def bootstrap_cluster(pod, dry_run, offline):
     """Orchestrates the entire start sequence seamlessly."""
     pods = CONFIG.get("pods", [])
@@ -99,6 +137,9 @@ def bootstrap_cluster(pod, dry_run, offline):
 
     if pod:
         rprint(f"[steel_blue]Starting[/] {pod}")
+        if not dry_run:
+            verify_dependencies()
+            _prepare_single_pod(pod, offline)
         if use_https and not dry_run:
             key_file, cert_file = _setup_https_certificates(pods)
             _update_tls_secrets(key_file, cert_file)
@@ -642,11 +683,7 @@ def install_pods_in_cluster() -> None:
     """Install Pods into the cluster"""
 
     # Let's setup the code directory PV and PVC in k3s
-    user_path = os.path.expanduser("~")
-    command = f"kubectl apply -f {user_path}/.auto/k3s/pv.yaml"
-    utils.run_and_wait(command)
-    command = f"kubectl apply -f {user_path}/.auto/k3s/pvc.yaml"
-    utils.run_and_wait(command)
+    _apply_code_pv_pvc()
 
     # Now let's start all the pods
     rprint("  -- Pods:")
