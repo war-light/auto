@@ -139,11 +139,27 @@ def bootstrap_cluster(pod, dry_run, offline):
         rprint(f"[steel_blue]Starting[/] {pod}")
         if not dry_run:
             verify_dependencies()
+            # Single-pod start assumes the cluster is already up; fail loudly
+            # rather than letting downstream kubectl/helm calls error obscurely.
+            status, _ = utils.get_cluster_status()
+            if status != "Running":
+                utils.declare_error(
+                    "Cluster is not running. Run 'auto start' (no pod) first to "
+                    "bootstrap the cluster, then 'auto start <pod>' to add a pod.",
+                    exit_auto=True,
+                )
+                return
             _prepare_single_pod(pod, offline)
         if use_https and not dry_run:
             key_file, cert_file = _setup_https_certificates(pods)
             _update_tls_secrets(key_file, cert_file)
+        if not dry_run:
+            # Pick up any system-pods newly required by this pod's .auto/config.yaml
+            # (e.g., the user just added redis). install_system_pods is idempotent.
+            services.install_system_pods()
         start_pod(pod)
+        if not dry_run:
+            services.create_databases_for_pod(pod)
         return
 
     with Progress(transient=False) as progress:
