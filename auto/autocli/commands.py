@@ -8,10 +8,11 @@ import json
 import os
 
 import click
-from autocli import core, registry, services, utils
-from autocli.config import CONFIG
 from rich import print as rprint
 from rich.progress import Progress
+
+from autocli import core, registry, services, utils
+from autocli.config import CONFIG
 
 VERSION = "0.7.1"
 
@@ -271,7 +272,12 @@ def status(self, namespace, all_namespaces, watch):  # pylint: disable=unused-ar
 
 @auto.command()
 @click.pass_context
-@click.option("--force", is_flag=True, default=False, help="Force update even if already at the latest version.")
+@click.option(
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Force update even if already at the latest version.",
+)
 def update(self, force):  # pylint: disable=unused-argument
     """Update auto CLI to the latest version"""
     latest_version_json = utils.run_and_return(
