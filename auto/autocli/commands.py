@@ -271,7 +271,8 @@ def status(self, namespace, all_namespaces, watch):  # pylint: disable=unused-ar
 
 @auto.command()
 @click.pass_context
-def update(self):  # pylint: disable=unused-argument
+@click.option("--force", is_flag=True, default=False, help="Force update even if already at the latest version.")
+def update(self, force):  # pylint: disable=unused-argument
     """Update auto CLI to the latest version"""
     latest_version_json = utils.run_and_return(
         "curl -s https://api.github.com/repos/devocho/auto/releases/latest"
@@ -280,7 +281,7 @@ def update(self):  # pylint: disable=unused-argument
         try:
             latest_version_data = json.loads(latest_version_json)
             latest_version = latest_version_data["tag_name"].lstrip("v")
-            if VERSION == latest_version:
+            if VERSION == latest_version and not force:
                 rprint(f"[green]Current version ({VERSION}) is already the latest.[/]")
                 rprint(
                     """
