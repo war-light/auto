@@ -321,10 +321,13 @@ def create_postgres_database(database, retries=0):
             rprint(f"  [red]FAILED: Could not create database[/] {database}")
 
 
-def get_full_pod_name(pod) -> str:
+def get_full_pod_name(pod, only_running=True) -> str:
     """Get the full name of the pod for a k3s pod by application name"""
 
-    cmd = f"kubectl get pods | grep {pod} " + "| grep Running | awk 'NR==1{{print $1}}'"
+    if only_running:
+        cmd = f"kubectl get pods | grep {pod} " + "| grep Running | awk 'NR==1{{print $1}}'"
+    else:
+        cmd = f"kubectl get pods | grep {pod} " + "| awk 'NR==1{{print $1}}'"
 
     # Make this command safe to run
     cmd = shlex.quote(cmd)
@@ -761,9 +764,10 @@ def get_cluster_status():
     style = "red"
 
     # Check if k3d is even installed and lists the cluster
-    if run_and_wait("k3d cluster list", check_result="NAME"):
+    # suppress_error=True prevents Docker daemon errors when cluster is simply stopped
+    if run_and_wait("k3d cluster list", check_result="NAME", suppress_error=True):
         # Check if running (1/1 servers running)
-        if run_and_wait("k3d cluster list", check_result="1/1"):
+        if run_and_wait("k3d cluster list", check_result="1/1", suppress_error=True):
             status = "Running"
             style = "green"
     return status, style

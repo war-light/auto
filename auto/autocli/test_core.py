@@ -142,15 +142,16 @@ def test_list_cluster_images(mock_local_pods, mock_run_return):
 @patch("autocli.utils.run_and_return")
 @patch("autocli.utils.get_full_pod_name")
 @patch("os.system")
-@patch("autocli.utils.run_and_wait")
-def test_output_logs(mock_run_wait, mock_system, mock_name, mock_ip):
+@patch("autocli.utils.get_cluster_status")
+def test_output_logs(mock_cluster_status, mock_system, mock_name, mock_ip):
     """Test log output logic"""
-    mock_run_wait.return_value = False
+    mock_cluster_status.return_value = ("Running", "green")
     mock_name.return_value = "mypod-12345"
     mock_ip.return_value = "10.0.0.5"
 
     core.output_logs("mypod")
 
+    mock_name.assert_called_with("mypod", only_running=False)
     cmd = mock_system.call_args[0][0]
     assert "kubectl logs -f mypod-12345" in cmd
     assert "grep --line-buffered -v" in cmd

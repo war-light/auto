@@ -711,12 +711,12 @@ def output_logs(pod):
     """Output the logs for a pod via kubctl"""
 
     # Is the cluster running or stopped?
-    bash_command = """/usr/local/bin/k3d cluster list"""
-    if utils.run_and_wait(bash_command, check_result="0/1"):
+    cluster_status, _ = utils.get_cluster_status()
+    if cluster_status != "Running":
         rprint("[red]ERROR: Development cluster is not running!")
         return
 
-    pod_name = utils.get_full_pod_name(pod)
+    pod_name = utils.get_full_pod_name(pod, only_running=False)
 
     if not pod_name:
         utils.declare_error(f"Pod not found: {pod}")
