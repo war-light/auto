@@ -241,3 +241,28 @@ def test_bootstrap_single_pod_dry_run(  # pylint: disable=too-many-arguments
     # delegates the dry-run check to (it runs regardless), so we only assert
     # the side-effecting helpers are bypassed.
     mock_start.assert_called_once_with("api")
+
+
+# --- migrate / rollback ---------------------------------------------------
+
+
+@patch("autocli.utils.run_one_shot_pod_command")
+def test_migrate_uses_ephemeral_pod(mock_run):
+    """migrate should run smalls.py in a one-shot pod, not via kubectl exec."""
+    mock_run.return_value = 0
+    core.migrate_with_smalls("api")
+    mock_run.assert_called_once()
+    kwargs = mock_run.call_args.kwargs
+    args = mock_run.call_args.args
+    assert args[0] == "api"
+    assert kwargs["command_args"] == ["/mnt/code/api/smalls.py", "migrate"]
+    assert kwargs["action_label"] == "migrate"
+    # SMALLS_ENV=PROD suppresses the interactive failure prompt
+    assert {"name": "SMALLS_ENV", "value": "PROD"} in kwargs["extra_env"]
+
+
+@patch("autocli.utils.run_command_inside_pod")
+def test_rollback_stays_on_kubectl_exec(mock_exec):
+    """rollback stays on kubectl exec because smalls.py prompts for confirmation."""
+    core.rollback_with_smalls("api", "0003")
+    mock_exec.assert_called_once_with("api", "./smalls.py rollback 0003")

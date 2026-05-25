@@ -887,16 +887,28 @@ def install_config_from_repo(repo):
 
 
 def migrate_with_smalls(pod):
-    """Run the database migrations in a pod with smalls"""
+    """Run database migrations in an ephemeral pod that mirrors the deployment.
 
-    # Run the command inside the pod
-    command = "./smalls.py migrate"
-    utils.run_command_inside_pod(pod, command)
+    Avoids the chicken-and-egg case where the app container won't reach
+    Running because it depends on schema state — the migrator pod has its
+    own lifecycle and exits when smalls.py finishes.
+    """
+    return utils.run_one_shot_pod_command(
+        pod,
+        command_args=[f"/mnt/code/{pod}/smalls.py", "migrate"],
+        action_label="migrate",
+        # SMALLS_ENV=PROD disables smalls.py's interactive "continue?" prompt
+        # on migration failure, which would hang in a non-TTY pod.
+        extra_env=[{"name": "SMALLS_ENV", "value": "PROD"}],
+    )
 
 
 def rollback_with_smalls(pod, number):
-    """Run the database rollback in a pod with smalls"""
+    """Run database rollback in the running app pod via kubectl exec.
 
-    # Run the command inside the pod
+    Rollback is left on exec because smalls.py prompts for confirmation
+    (click.confirm), which needs a TTY. Rollbacks are also rare and
+    typically run against a known-healthy system.
+    """
     command = f"./smalls.py rollback {number}"
     utils.run_command_inside_pod(pod, command)

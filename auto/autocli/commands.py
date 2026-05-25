@@ -14,7 +14,7 @@ from rich.progress import Progress
 from autocli import core, registry, services, utils
 from autocli.config import CONFIG
 
-VERSION = "0.7.1"
+VERSION = "0.7.2"
 
 
 # Global settings for click
