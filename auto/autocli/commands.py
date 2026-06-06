@@ -8,13 +8,12 @@ import json
 import os
 
 import click
+from autocli import core, registry, services, utils
+from autocli.config import CONFIG
 from rich import print as rprint
 from rich.progress import Progress
 
-from autocli import core, registry, services, utils
-from autocli.config import CONFIG
-
-VERSION = "0.7.2"
+VERSION = "0.7.3"
 
 
 # Global settings for click
