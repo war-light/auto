@@ -795,7 +795,6 @@ def output_logs(pod):
     error_msg = ""
     if not pod_name:
         error_msg += f"Pod not found: {pod}"
-
     if cluster_status != "Running":
         error_msg += "\nDevelopment cluster is not running."
     if error_msg:
