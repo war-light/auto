@@ -711,15 +711,18 @@ def output_logs(pod):
     """Output the logs for a pod via kubctl"""
 
     # Is the cluster running or stopped?
-    cluster_status, _ = utils.get_cluster_status()
-    if cluster_status != "Running":
-        rprint("[red]ERROR: Development cluster is not running!")
-        return
+    status, _ = utils.get_cluster_status()
 
     pod_name = utils.get_full_pod_name(pod, only_running=False)
-
     if not pod_name:
-        utils.declare_error(f"Pod not found: {pod}")
+        error_msg = f"Pod not found: {pod}"
+        if status != "Running":
+            error_msg += "\nDevelopment cluster is not running."
+        utils.declare_error(error_msg)
+
+    if status != "Running":
+        rprint("[red]ERROR: Development cluster is not running!")
+        return
 
     # Dynamically find the Node IP (often the source of the health check)
     node_ip = utils.run_and_return(
