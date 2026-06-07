@@ -240,16 +240,26 @@ def connect_to_minio() -> None:
 
 
 def seed_pod(pod):
-    """Run the seeddb.py script inside a pod's container"""
+    """Run the seed script in an ephemeral pod that mirrors the deployment"""
     config = utils.get_pod_config(pod)
     seed_command = config["seed-command"]
-    utils.run_command_inside_pod(pod, seed_command)
-    rprint(f"  -- {pod} database seeded")
+    rc = utils.run_one_shot_pod_command(
+        pod,
+        command_args=[f"/mnt/code/{pod}/{seed_command}"],
+        action_label="seed",
+    )
+    if rc == 0:
+        rprint(f"  -- {pod} database seeded")
 
 
 def init_pod_db(pod):
-    """Run the initdb.py script inside a pod's container"""
+    """Run the initdb script in an ephemeral pod that mirrors the deployment"""
     config = utils.get_pod_config(pod)
     init_command = config["init-command"]
-    utils.run_command_inside_pod(pod, init_command)
-    rprint(f"  -- {pod} database initialized")
+    rc = utils.run_one_shot_pod_command(
+        pod,
+        command_args=[f"/mnt/code/{pod}/{init_command}"],
+        action_label="init",
+    )
+    if rc == 0:
+        rprint(f"  -- {pod} database initialized")
