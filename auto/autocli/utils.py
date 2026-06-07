@@ -1138,4 +1138,5 @@ def get_pod_status(pod):
 
     if not status:
         return None
+    # Take the first line of output and strip whitespace to get the status
     return status.splitlines()[0].strip()
