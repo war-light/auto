@@ -9,13 +9,14 @@ import time
 from pathlib import Path
 
 import yaml
-from autocli import registry, services, utils
-from autocli.config import CONFIG
 from rich import print as rprint
 from rich.console import Console, Group
 from rich.live import Live
 from rich.progress import Progress
 from rich.text import Text
+
+from autocli import registry, services, utils
+from autocli.config import CONFIG
 
 
 def _setup_https_certificates(pods):
