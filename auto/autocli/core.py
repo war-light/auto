@@ -789,18 +789,17 @@ def install_pods_in_cluster() -> None:
 def output_logs(pod):
     """Output the logs for a pod via kubctl"""
 
-    # Is the cluster running or stopped?
-    status, _ = utils.get_cluster_status()
-
     pod_name = utils.get_full_pod_name(pod, only_running=False)
+    # Is the cluster running or stopped?
+    cluster_status, _ = utils.get_cluster_status()
+    error_msg = ""
     if not pod_name:
-        error_msg = f"Pod not found: {pod}"
-        if status != "Running":
-            error_msg += "\nDevelopment cluster is not running."
-        utils.declare_error(error_msg)
+        error_msg += f"Pod not found: {pod}"
 
-    if status != "Running":
-        rprint("[red]ERROR: Development cluster is not running!")
+    if cluster_status != "Running":
+        error_msg += "\nDevelopment cluster is not running."
+    if error_msg:
+        utils.declare_error(error_msg)
         return
 
     # Dynamically find the Node IP (often the source of the health check)
@@ -830,6 +829,11 @@ def output_logs(pod):
     # Run kubectl logs piped through our filters
     # os.system gives a direct stream without a python buffer
     os.system(f"kubectl logs -f {pod_name} | {filter_cmd}")
+
+    # Print a message for crashed or non running pod states
+    pod_status = utils.get_pod_status(pod_name)
+    if pod_status != "Running":
+        rprint(f"  -- [red]Pod status: {pod_status}.[/red]")
 
 
 def verify_dependencies():

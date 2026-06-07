@@ -1115,3 +1115,27 @@ def run_one_shot_pod_command(
             capture_output=True,
             suppress_error=True,
         )
+
+
+def get_pod_status(pod):
+    """Extracts the Status column of a specific pod, in any phase
+    (Pending, Running, Succeeded, Failed, Unknown) or any other error
+    states
+
+    Args:
+        pod (str): The FULL name of the pod to check
+    Returns: 
+        status (str): Pod status (Running | Error | CrashLoopBackOff | etc)
+    Raises:
+        None: Returns None if the pod is not found or if there is an error running the command
+    """
+    if not pod:
+        return None
+
+    cmd = f"kubectl get pod {pod} --no-headers | awk '{{print $3}}'"
+    # Run the command and return the raw STATUS column kubectl shows
+    status = run_and_return(cmd)
+
+    if not status:
+        return None
+    return status.splitlines()[0].strip()

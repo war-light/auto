@@ -8,6 +8,8 @@ import json
 import os
 
 import click
+from autocli import core, registry, services, utils
+from autocli.config import CONFIG
 from rich import print as rprint
 from rich.progress import Progress
 
